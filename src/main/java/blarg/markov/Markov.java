@@ -16,8 +16,6 @@ public class Markov {
     }
     
     public void learn(String text) {
-        ngrams = new ArrayList<>();
-        
         if (text.contains(" ")) {
             String words[] = text.split(" ");
             
