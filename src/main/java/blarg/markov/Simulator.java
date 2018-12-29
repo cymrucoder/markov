@@ -6,7 +6,9 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -16,23 +18,15 @@ import java.util.Map;
 public class Simulator {
     
     Map<String, Markov> markovs;
+    Gson gson;
     
     public Simulator() {
+        this.gson = new Gson();
         markovs = new HashMap<>();
     }
     
-    public void addPerson(String name) {
-        markovs.put(name, new Markov());
-    }
-    
-    public void learn(String name, String text) {
-        markovs.get(name).learn(text);
-    }
-    
-    public static void main(String args[]) throws FileNotFoundException {
-        Simulator sim = new Simulator();
-        Gson gson = new Gson();
-        JsonObject json = gson.fromJson(new FileReader("corpus\\fbexp\\messages\\inbox\\chatname\\message.json"), JsonObject.class);
+    public void learnFromJsonFile(String filename) throws FileNotFoundException {
+        JsonObject json = gson.fromJson(new FileReader(filename), JsonObject.class); 
         
         // Load participants
         JsonArray participants = json.getAsJsonArray("participants");        
@@ -41,7 +35,7 @@ public class Simulator {
             JsonObject participantObject = participant.getAsJsonObject();
             JsonElement nameElement = participantObject.get("name");
             String name = nameElement.getAsString();
-            sim.addPerson(name);            
+            addPerson(name);            
         }
 
         // Load messages and train Markovs
@@ -54,9 +48,60 @@ public class Simulator {
                 if ("Generic".equals(type)) {
                     String name = messageObject.get("sender_name").getAsString();
                     String content = messageObject.get("content").getAsString();
-                    sim.learn(name, content);
+                    learn(name, content);
                 }
             }
         }
+        
+        System.out.println("Finished learning");
+    }
+    
+    public void addPerson(String name) {
+        markovs.put(name, new Markov());
+    }
+    
+    public void learn(String name, String text) {
+        markovs.get(name).learn(text);
+    }
+    
+    public String generate(String name, List<String> prefixes) {
+        return markovs.get(name).generate(prefixes);
+    }
+    
+    public void finishSentenceForAllParticipants(String prefixes) {
+        String prefixArray[] = prefixes.split(" ");// I'm not checking if this is valid so break it if you want
+        
+        for (Map.Entry<String, Markov> entry : markovs.entrySet()) {
+            String name = entry.getKey();            
+            
+            List<String> textList = new ArrayList<>();
+            
+            for (String prefix : prefixArray) {
+                textList.add(prefix);
+            }
+
+            while (true) {
+                String nextWord = generate(name, textList.subList(textList.size() - 2, textList.size()));            
+                textList.add(nextWord);
+                if (nextWord.endsWith(".") || "".equals(nextWord)) {
+                    break;
+                }
+            }        
+
+            String output = name + " says: ";        
+
+            for (String word : textList) {
+                output += word + " ";
+            }
+
+            if (!(name + " says: " + prefixes).equals(output.trim())) {
+                System.out.println(output);
+            }
+        }        
+    }
+    
+    public static void main(String args[]) throws FileNotFoundException {
+        Simulator sim = new Simulator();
+        sim.learnFromJsonFile("corpus\\fbexp\\messages\\inbox\\chatname\\message.json");
     }
 }
