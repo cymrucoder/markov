@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 /**
  *
@@ -16,12 +17,17 @@ public class Markov {
     List<NGram> threeGrams;
     
     Map<List<String>, Integer> prefixes;
+    int totalPrefixes;
+    
+    Random rand;
     
     public Markov() {
         oneGrams = new ArrayList<>();
         twoGrams = new ArrayList<>();
         threeGrams = new ArrayList<>();
         prefixes = new HashMap<>();
+        rand = new Random();
+        totalPrefixes = 0;
     }
     
     public void learn(String text) {
@@ -39,6 +45,7 @@ public class Markov {
                 prefixes.put(firstWords, 0);
             }
             prefixes.put(firstWords, prefixes.get(firstWords) + 1);
+            totalPrefixes++;
             
             if (words.length > 1) {
                 for (int i = 0; i < words.length - 2; i++) {
@@ -112,5 +119,18 @@ public class Markov {
         }
         return "";
     }
-
+    
+    public List<String> pickFirstWords() {
+        int counter = 0;
+        int chosenPrefixThreshold = rand.nextInt(totalPrefixes);
+        
+        for (Map.Entry<List<String>, Integer> entry : prefixes.entrySet()) {
+            counter += entry.getValue();
+            if (counter > chosenPrefixThreshold) {
+                return entry.getKey();
+            }
+        }
+        
+        return new ArrayList<>();
+    }
 }

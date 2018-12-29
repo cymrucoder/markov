@@ -14,8 +14,10 @@ public class NGram {
     List<String> words;
     Map<String, Integer> suffixes;
     int totalSuffixes;
+    Random rand;
     
     public NGram(List<String> words) {
+        this.rand = new Random();
         this.words = words;
         suffixes = new HashMap<>();
         totalSuffixes = 0;
@@ -44,7 +46,6 @@ public class NGram {
     }
 
     public String generateSuffix() {
-        Random rand = new Random();
         int counter = 0;
         int chosenSuffix = rand.nextInt(totalSuffixes);
         
