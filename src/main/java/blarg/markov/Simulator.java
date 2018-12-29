@@ -52,6 +52,9 @@ public class Simulator {
         // Load messages and train Markovs
         JsonArray messages = json.getAsJsonArray("messages");
         
+        System.out.println("Starting learning from " + messages.size() + " messages");
+        int messagesSoFar = 0;        
+        
         for (JsonElement message : messages) {
             JsonObject messageObject = message.getAsJsonObject();
             if (messageObject.has("type") && messageObject.has("sender_name") && messageObject.has("content")) {
@@ -63,6 +66,10 @@ public class Simulator {
                     participantOdds.put(name, participantOdds.get(name) + 1);
                     totalMessages++;
                 }
+            }
+            messagesSoFar++;
+            if (messagesSoFar > 0 && messagesSoFar % 500 == 0) {
+                System.out.println("Completed " + messagesSoFar + " messages so far");
             }
         }
         
