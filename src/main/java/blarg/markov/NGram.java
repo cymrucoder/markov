@@ -15,14 +15,14 @@ public class NGram {
     Map<String, Integer> suffixes;
     int totalSuffixes;
     Random rand;
-    
+
     public NGram(List<String> words) {
         this.rand = new Random();
         this.words = words;
         suffixes = new HashMap<>();
         totalSuffixes = 0;
     }
-    
+
     @Override
     public boolean equals(Object o) {
         if (o == null) {
@@ -48,14 +48,14 @@ public class NGram {
     public String generateSuffix() {
         int counter = 0;
         int chosenSuffix = rand.nextInt(totalSuffixes);
-        
+
         for (Map.Entry<String, Integer> entry : suffixes.entrySet()) {
             counter += entry.getValue();
             if (counter > chosenSuffix) {
                 return entry.getKey();
             }
         }
-        
+
         return "";
     }
 }
