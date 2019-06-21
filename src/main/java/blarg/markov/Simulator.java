@@ -4,8 +4,15 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.FileReader;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -14,19 +21,23 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
  * @author cymrucoder
  */
-public class Simulator {
+public class Simulator implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     Map<String, Markov> markovs;
     Map<String, Integer> participantOdds;
-    Gson gson;
-    Random rand;
+    transient Gson gson;
+    transient Random rand;
     int totalMessages;
-    Timer timer;
+    transient Timer timer;
 
     public Simulator() {
         this.timer = new Timer();
@@ -35,6 +46,13 @@ public class Simulator {
         markovs = new HashMap<>();
         participantOdds = new HashMap<>();
         totalMessages = 0;
+    }
+
+    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+        in.defaultReadObject();
+        this.timer = new Timer();
+        this.rand = new Random();
+        this.gson = new Gson();
     }
 
     public void learnFromJsonFile(String filename) throws FileNotFoundException {
@@ -163,9 +181,33 @@ public class Simulator {
         System.out.println(participant + " says: " + message);
     }
 
-    public static void main(String args[]) throws FileNotFoundException {
+    public static void main(String args[]) throws FileNotFoundException, ClassNotFoundException {
         Simulator sim = new Simulator();
-        sim.learnFromJsonFile("corpus\\fbexp2019\\messages\\inbox\\chatname\\message.json");
+
+        if (true) {// These will eventually have some proper control so you can optionally save or load or learn
+            sim.learnFromJsonFile("corpus\\fbexp2019\\messages\\inbox\\chatname\\message.json");
+
+            if (true) {
+                try (ObjectOutputStream oos
+                        = new ObjectOutputStream(new FileOutputStream("memory\\simulator.ser"))) {
+
+                    oos.writeObject(sim);
+                    System.out.println("Done");
+
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            }
+        }
+
+        if (false) {
+            try (ObjectInputStream oi = new ObjectInputStream(new FileInputStream(new File("memory\\simulator.ser")))) {
+                sim = (Simulator) oi.readObject();
+            } catch (IOException ex) {
+                Logger.getLogger(Simulator.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+
         sim.run();
     }
 
@@ -175,6 +217,6 @@ public class Simulator {
             public void run() {
                 printNextMessage();
             }
-        },0, 5000);
+        }, 0, 5000);
     }
 }

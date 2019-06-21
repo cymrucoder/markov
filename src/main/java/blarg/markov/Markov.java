@@ -1,5 +1,8 @@
 package blarg.markov;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -10,7 +13,9 @@ import java.util.Random;
  *
  * @author cymrucoder
  */
-public class Markov {
+public class Markov implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     List<NGram> oneGrams;
     List<NGram> twoGrams;
@@ -19,7 +24,7 @@ public class Markov {
     Map<List<String>, Integer> prefixes;
     int totalPrefixes;
 
-    Random rand;
+    transient Random rand;
 
     public Markov() {
         oneGrams = new ArrayList<>();
@@ -28,6 +33,11 @@ public class Markov {
         prefixes = new HashMap<>();
         rand = new Random();
         totalPrefixes = 0;
+    }
+
+    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+        in.defaultReadObject();
+        this.rand = new Random();
     }
 
     public void learn(String text) {
