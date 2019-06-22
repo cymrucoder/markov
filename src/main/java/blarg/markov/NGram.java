@@ -1,5 +1,8 @@
 package blarg.markov;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -9,18 +12,25 @@ import java.util.Random;
  *
  * @author cymrucoder
  */
-public class NGram {
+public class NGram implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     List<String> words;
     Map<String, Integer> suffixes;
     int totalSuffixes;
-    Random rand;
+    transient Random rand;
 
     public NGram(List<String> words) {
         this.rand = new Random();
         this.words = words;
         suffixes = new HashMap<>();
         totalSuffixes = 0;
+    }
+
+    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+        in.defaultReadObject();
+        this.rand = new Random();
     }
 
     @Override
