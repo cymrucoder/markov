@@ -18,6 +18,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -31,6 +32,7 @@ import java.util.logging.Logger;
 public class Simulator implements Serializable {
 
     private static final long serialVersionUID = 1L;
+    private static final Logger logger = Logger.getLogger(Simulator.class.getName());
 
     Map<String, Markov> markovs;
     Map<String, Integer> participantOdds;
@@ -181,34 +183,47 @@ public class Simulator implements Serializable {
         System.out.println(participant + " says: " + message);
     }
 
-    public static void main(String args[]) throws FileNotFoundException, ClassNotFoundException {
-        Simulator sim = new Simulator();
+    public static void main(String args[]) throws FileNotFoundException, ClassNotFoundException, IOException {
+        Properties properties = new Properties();
 
-        if (true) {// These will eventually have some proper control so you can optionally save or load or learn
-            sim.learnFromJsonFile("corpus\\fbexp2019\\messages\\inbox\\chatname\\message.json");
+        try {
+            properties.load(new FileInputStream("config.properties"));
+        } catch (IOException ex) {
+            logger.log(Level.WARNING, "Configuration file not found at config.properties in project root directory, using default configuration.");
+        }
 
-            if (true) {
-                try (ObjectOutputStream oos
-                        = new ObjectOutputStream(new FileOutputStream("memory\\simulator.ser"))) {
+        boolean shouldLearn = Boolean.parseBoolean(properties.getProperty("learn", "true"));
+        boolean shouldSave = Boolean.parseBoolean(properties.getProperty("save", "false"));
+        boolean shouldLoad = Boolean.parseBoolean(properties.getProperty("load", "false"));
+        String dataToLoad = properties.getProperty("dataToLoad", "corpus\\message.json");
 
-                    oos.writeObject(sim);
-                    System.out.println("Done");
+        if (shouldLearn && shouldLoad) {
+            logger.log(Level.WARNING, "Both learn and load are configured - loaded memory will overwrite learning.");
+            shouldLearn = false;
+        }
 
-                } catch (Exception ex) {
-                    ex.printStackTrace();
+        if (!shouldLearn && !shouldLoad) {
+            logger.log(Level.SEVERE, "Neither learn nor load are configured - simulator has nothing to do.");
+        } else {
+            Simulator sim = new Simulator();
+
+            if (shouldLearn) {
+                sim.learnFromJsonFile(dataToLoad);
+
+                if (shouldSave) {
+                    try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream("memory\\simulator.ser"))) {
+                        oos.writeObject(sim);
+                    }
                 }
             }
-        }
 
-        if (false) {
-            try (ObjectInputStream oi = new ObjectInputStream(new FileInputStream(new File("memory\\simulator.ser")))) {
-                sim = (Simulator) oi.readObject();
-            } catch (IOException ex) {
-                Logger.getLogger(Simulator.class.getName()).log(Level.SEVERE, null, ex);
+            if (shouldLoad) {
+                try (ObjectInputStream oi = new ObjectInputStream(new FileInputStream(new File("memory\\simulator.ser")))) {
+                    sim = (Simulator) oi.readObject();
+                }
             }
+            sim.run();
         }
-
-        sim.run();
     }
 
     public void run() {
