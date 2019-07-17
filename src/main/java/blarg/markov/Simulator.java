@@ -105,6 +105,10 @@ public class Simulator implements Serializable {
     }
 
     public void learn(String name, String text) {
+        if (!markovs.containsKey(name)) {
+            addPerson(name);
+        }
+
         markovs.get(name).learn(text);
     }
 
