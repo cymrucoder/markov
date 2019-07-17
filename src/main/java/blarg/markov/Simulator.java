@@ -98,8 +98,10 @@ public class Simulator implements Serializable {
     }
 
     public void addPerson(String name) {
-        markovs.put(name, new Markov());
-        participantOdds.put(name, 0);
+        if (!markovs.containsKey(name)) {
+            markovs.put(name, new Markov());
+            participantOdds.put(name, 0);
+        }
     }
 
     public void learn(String name, String text) {
